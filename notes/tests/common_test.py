@@ -1,27 +1,31 @@
 """Файл news/tests/test_content.py."""
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
+from django.urls import reverse_lazy
 
 from notes.models import Note
 
 
 User = get_user_model()
 
-list_url = reverse('notes:list', None)
-url_add = reverse('notes:add', None)
-url_done = reverse('notes:success', None)
-url_home = reverse('notes:home', None)
-url_login = reverse('users:login', None)
-url_logout = reverse('users:logout', None)
-url_signup = reverse('users:signup', None)
+list_url = reverse_lazy('notes:list', None)
+url_add = reverse_lazy('notes:add', None)
+url_done = reverse_lazy('notes:success', None)
+url_home = reverse_lazy('notes:home', None)
+url_login = reverse_lazy('users:login', None)
+url_logout = reverse_lazy('users:logout', None)
+url_signup = reverse_lazy('users:signup', None)
 
 NOTE_TITLE = 'Заголовок'
 NOTE_TEXT = 'Текст'
-NOTE_SLUG = 'zagolovok'
+NOTE_SLUG = 'zagzag'
 NEW_NOTE_TEXT = 'Новый текст'
 
-form_data = {'title': NOTE_TITLE, 'text': NOTE_TEXT}
+form_data = {
+    'title': NOTE_TITLE,
+    'text': NOTE_TEXT,
+    'slug': NOTE_SLUG
+}
 
 
 class TestNotesMain(TestCase):
@@ -35,17 +39,7 @@ class TestNotesMain(TestCase):
         cls.reader_client = Client()
         cls.reader_client.force_login(cls.reader)
         cls.note = Note.objects.create(title=NOTE_TITLE, text=NOTE_TEXT,
-                                       author=cls.author, slug='zagolovok')
-        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
-        cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
-        cls.detail_url = reverse('notes:detail', args=(cls.note.slug,))
-
-
-
-
-
-
-
-        #cls.url_edit = reverse('notes:edit', (cls.note.slug,))
-        #cls.url_delite = reverse('notes:delete', (cls.note.slug,))
-        #cls.url_detail = reverse('notes:detail', (cls.note.slug,))
+                                       author=cls.author, slug='zag')
+        cls.edit_url = reverse_lazy('notes:edit', args=(cls.note.slug,))
+        cls.delete_url = reverse_lazy('notes:delete', args=(cls.note.slug,))
+        cls.detail_url = reverse_lazy('notes:detail', args=(cls.note.slug,))

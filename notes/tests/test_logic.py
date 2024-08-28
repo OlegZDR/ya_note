@@ -1,13 +1,12 @@
 """Файл notes/tests/test_logic.py. YA_NOTE. Тестирование логики."""
-import unittest
 from http import HTTPStatus
 
 from django.db.utils import IntegrityError
+from pytils.translit import slugify
 
 from notes.models import Note
 from .common_test import (
-    TestNotesMain, NOTE_TITLE, NOTE_TEXT, NEW_NOTE_TEXT, NOTE_SLUG,
-    url_add, url_done, form_data)
+    TestNotesMain, NOTE_TITLE, NOTE_TEXT, url_add, url_done, form_data)
 
 
 class TestNoteCreation(TestNotesMain):
@@ -48,18 +47,6 @@ class TestNoteCreation(TestNotesMain):
 class TestNoteEditDelete(TestNotesMain):
     """Класс проверки редактирования и удаления заметки."""
 
-    #@classmethod
-    #def setUpTestData(cls):
-        # Создаём заметку в БД.
-    #    cls.form_data = {'text': NEW_NOTE_TEXT,
-    #                     'title': NOTE_TITLE,
-    #                     'author': cls.author,
-    #                     }
-    #    cls.note = Note.objects.create(cls.form_data)
-        # Формируем адрес для редактирования и удаления заметки.
-    #    cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
-    #    cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
-
     def test_author_can_delete_note(self):
         """Автор может удалять заметки."""
         notes_count_before = Note.objects.count()
@@ -87,7 +74,7 @@ class TestNoteEditDelete(TestNotesMain):
         self.assertEqual(note.text, form_data['text'])
         self.assertEqual(note.title, form_data['title'])
         self.assertEqual(note.author, self.author)
-        
+
     def test_user_cant_delete_comment_of_another_user(self):
         """Неавтор не может удалять и редактировать заметки автора."""
         methods_url_and_data = (
@@ -125,5 +112,17 @@ class TestNoteEditDelete(TestNotesMain):
 
     def test_slug_generated_automatically(self):
         """Slug формируется автоматически."""
-        note_obj = Note.objects.get()
-        self.assertEqual(note_obj.slug, NOTE_SLUG)
+        notes_count_before = Note.objects.count()
+        ids = list(Note.objects.values_list('id', flat=True))
+        form_data.pop('slug')
+        response = self.auth_client.post(url_add, data=form_data)
+        self.assertRedirects(response, url_done)
+        note_count = Note.objects.count()
+        # Проверяем, что даже без slug заметка была создана:
+        self.assertEqual(note_count - notes_count_before, 1)
+        # Получаем объект заметки из базы.
+        note_qs = Note.objects.exclude(id__in=ids)
+        note = note_qs.first()
+        # Формируем ожидаемый slug:
+        expected_slug = slugify(form_data['title'])
+        self.assertEqual(note.slug, expected_slug)
